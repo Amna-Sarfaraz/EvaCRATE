@@ -12,10 +12,12 @@ import os
 import pickle
 import numpy as np
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 from datetime import datetime
 import math
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS for all routes
 
 # ── Load trained model ─────────────────────────────────────────
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'crop_model.pkl')

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EvaCRATE — Smart Crop Storage Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --c0:#F2EDE2; --c1:#EBE5D8; --c2:#E3DBCC;
+  --c3:rgba(55,48,32,0.10); --c4:rgba(55,48,32,0.06);
+  --g9:#1C3826; --g8:#2B5038; --g7:#3A6648; --g6:#4A7D58; --g5:#629B6E; --g3:#A8CEAC; --g1:#E2F0E4;
+  --t1:#1A1610; --t2:#48433A; --t3:#78726A; --t4:#A49D94;
+  --rg-bg:#E6F5EA; --rg-bd:#7DC48A; --rg-tx:#1A5226;
+  --ry-bg:#FBF7DC; --ry-bd:#D4C040; --ry-tx:#5E4E04;
+  --rb-bg:#FAE8D4; --rb-bd:#CC8840; --rb-tx:#6A3004;
+  --rr-bg:#FBE6E6; --rr-bd:#D46060; --rr-tx:#7A0C0C;
+  --sh-sm:0 2px 8px rgba(20,16,6,0.06),0 1px 2px rgba(20,16,6,0.04);
+  --sh-md:0 6px 24px rgba(20,16,6,0.09),0 2px 6px rgba(20,16,6,0.05);
+  --sh-lg:0 16px 48px rgba(20,16,6,0.14),0 4px 12px rgba(20,16,6,0.08);
+  --r1:10px; --r2:16px; --r3:22px; --r4:32px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:15px;scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--c0);color:var(--t1);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.032'/%3E%3C/svg%3E");opacity:.5}
+
+@keyframes fadeUp {from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn {from{opacity:0}to{opacity:1}}
+@keyframes slideIn {from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp {from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse {0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.78)}}
+@keyframes spin {to{transform:rotate(360deg)}}
+@keyframes barGrow {from{width:0}}
+@keyframes ripple {to{transform:scale(2.6);opacity:0}}
+@keyframes shake {0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes checkPop {0%{transform:scale(0) rotate(-20deg);opacity:0}70%{transform:scale(1.15) rotate(4deg)}100%{transform:scale(1) rotate(0);opacity:1}}
+@keyframes smsSlide {from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulseRed {0%,100%{box-shadow:0 4px 18px rgba(198,40,40,.38)}50%{box-shadow:0 4px 28px rgba(198,40,40,.6)}}
+
+.page{display:none}
+.page.active{display:block}
+
+#page-login{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px 60px}
+
+.login-brand{display:flex;flex-direction:column;align-items:center;margin-bottom:44px;animation:fadeUp .6s cubic-bezier(.22,1,.36,1) both}
+.login-logo{width:72px;height:72px;background:var(--g8);border-radius:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 32px rgba(43,80,56,.32);margin-bottom:20px}
+.login-logo svg{width:36px;height:36px}
+.login-app-name{font-family:'Playfair Display',serif;font-size:clamp(28px,6vw,40px);font-weight:800;color:var(--t1);letter-spacing:-.5px;line-height:1.1;text-align:center;margin-bottom:10px}
+.login-tagline{font-size:15px;color:var(--t3);text-align:center;line-height:1.6;max-width:320px}
+
+.login-card{width:100%;max-width:460px;background:rgba(255,255,255,.65);border:1px solid var(--c3);border-radius:var(--r4);padding:38px;box-shadow:var(--sh-lg);backdrop-filter:blur(10px);animation:fadeUp .6s cubic-bezier(.22,1,.36,1) .1s both}
+
+.step{display:none}
+.step.active{display:block;animation:fadeIn .35s ease both}
+
+.card-title{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;color:var(--t1);margin-bottom:6px}
+.card-desc{font-size:14px;color:var(--t3);margin-bottom:26px;line-height:1.55}
+
+.input-wrap{position:relative;margin-bottom:10px}
+.input-prefix{position:absolute;left:0;top:0;bottom:0;width:52px;display:flex;align-items:center;justify-content:center;border-right:1.5px solid var(--c3);font-size:13.5px;font-weight:600;color:var(--t3);pointer-events:none}
+.phone-field{width:100%;padding:15px 16px 15px 62px;background:var(--c0);border:1.5px solid var(--c3);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:16px;color:var(--t1);outline:none;transition:border-color .2s,box-shadow .2s;letter-spacing:.5px}
+.phone-field:focus{border-color:var(--g5);box-shadow:0 0 0 3px rgba(98,155,110,.12)}
+.phone-field::placeholder{color:var(--t4);letter-spacing:0}
+
+.input-hint{font-size:12px;color:var(--t4);margin-top:7px;margin-bottom:20px}
+
+.btn-primary{width:100%;padding:17px 24px;background:var(--g8);color:white;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:15.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 20px rgba(43,80,56,.3);transition:background .2s,transform .15s,box-shadow .2s}
+.btn-primary:hover{background:var(--g9);transform:translateY(-1px);box-shadow:0 8px 26px rgba(43,80,56,.36)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary svg{width:17px;height:17px;flex-shrink:0}
+.btn-primary .spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite}
+
+.sms-sent-box{background:var(--g1);border:1.5px solid var(--g3);border-radius:var(--r3);padding:22px;margin-bottom:16px;animation:smsSlide .4s cubic-bezier(.22,1,.36,1) both}
+.sms-sent-top{display:flex;align-items:flex-start;gap:14px;margin-bottom:14px}
+.sms-check-circle{width:42px;height:42px;border-radius:50%;background:var(--g7);display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:checkPop .5s cubic-bezier(.22,1,.36,1) .1s both;box-shadow:0 4px 12px rgba(58,102,72,.3)}
+.sms-check-circle svg{width:20px;height:20px;color:white}
+.sms-sent-title{font-size:15px;font-weight:700;color:var(--g7);margin-bottom:3px}
+.sms-sent-desc{font-size:13px;color:var(--t3);line-height:1.55}
+.sms-phone-display{display:flex;align-items:center;gap:9px;padding:10px 14px;background:white;border:1px solid var(--c3);border-radius:var(--r1);font-size:14px;font-weight:600;color:var(--t1)}
+.sms-phone-display svg{width:15px;height:15px;color:var(--g6);flex-shrink:0}
+
+.sms-preview{background:var(--c1);border:1px solid var(--c3);border-radius:var(--r2);padding:14px 16px;margin-bottom:20px;font-size:13px;color:var(--t3);line-height:1.6}
+.sms-preview-lbl{font-size:10.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--t4);margin-bottom:7px}
+.sms-link{color:var(--g7);font-weight:600;text-decoration:underline}
+
+.btn-open-dash{width:100%;padding:17px 24px;background:var(--g8);color:white;border:none;border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:15.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 6px 20px rgba(43,80,56,.3);transition:background .2s,transform .15s;margin-bottom:12px}
+.btn-open-dash:hover{background:var(--g9);transform:translateY(-1px)}
+.btn-open-dash svg{width:17px;height:17px}
+.btn-resend{width:100%;padding:13px;background:transparent;border:1.5px solid var(--c3);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;color:var(--t3);cursor:pointer;transition:all .18s}
+.btn-resend:hover{border-color:var(--g5);color:var(--g8);background:var(--g1)}
+
+.how-it-works{margin-top:28px;width:100%;max-width:460px;animation:fadeUp .5s ease .25s both}
+.hiw-title{font-size:11px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--t4);margin-bottom:14px;text-align:center}
+.hiw-steps{display:flex;flex-direction:column;gap:10px}
+.hiw-step{display:flex;align-items:flex-start;gap:12px}
+.hiw-num{width:24px;height:24px;border-radius:50%;background:var(--g8);color:white;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.hiw-text{font-size:13px;color:var(--t3);line-height:1.5}
+
+.dash-page{max-width:840px;margin:0 auto;padding:0 20px 80px}
+
+.header{display:flex;align-items:center;justify-content:space-between;padding:22px 0 26px;border-bottom:1px solid var(--c3);margin-bottom:30px}
+.header-brand{display:flex;align-items:center;gap:12px}
+.header-logo{width:42px;height:42px;background:var(--g8);border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(43,80,56,.28)}
+.header-logo svg{width:22px;height:22px}
+.header-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--t1);letter-spacing:.2px}
+.header-tagline{font-size:11.5px;color:var(--t4);margin-top:2px}
+.header-right{display:flex;align-items:center;gap:10px}
+.live-badge{display:flex;align-items:center;gap:7px;padding:6px 13px;background:var(--g1);border:1px solid var(--g3);border-radius:100px;font-size:12px;font-weight:600;color:var(--g7)}
+.live-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--g6);animation:pulse 2s ease infinite}
+.btn-back{display:flex;align-items:center;gap:6px;padding:7px 13px;background:transparent;border:1px solid var(--c3);border-radius:var(--r1);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;color:var(--t3);cursor:pointer;transition:all .18s}
+.btn-back:hover{border-color:var(--g5);color:var(--g8);background:var(--g1)}
+.btn-back svg{width:14px;height:14px}
+
+.model-banner{display:flex;align-items:center;gap:10px;padding:12px 18px;border-radius:var(--r2);margin-bottom:24px;font-size:13px;font-weight:500;animation:slideIn .4s ease both}
+.model-banner.loaded{background:var(--g1);border:1px solid var(--g3);color:var(--g7)}
+.model-banner.missing{background:#FFF4E0;border:1px solid #E8C060;color:#7A5000}
+.model-banner svg{width:16px;height:16px;flex-shrink:0}
+
+.sec-label{font-size:11px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;color:var(--t4);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.sec-label-r{font-size:11.5px;font-weight:400;text-transform:none;letter-spacing:0}
+
+.sensor-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.sensor-card{background:white;border:1px solid var(--c4);border-radius:var(--r3);padding:20px 22px;display:flex;align-items:center;gap:16px;box-shadow:var(--sh-sm);transition:box-shadow .2s,transform .2s}
+.sensor-card:hover{box-shadow:var(--sh-md);transform:translateY(-1px)}
+.sensor-icon{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sensor-icon.temp{background:#FAE6DC} .sensor-icon.hum{background:#DCECf8}
+.sensor-icon.temp svg{width:22px;height:22px;color:#C05828} .sensor-icon.hum svg{width:22px;height:22px;color:#2870A0}
+.sensor-lbl{font-size:11.5px;font-weight:500;color:var(--t4);margin-bottom:3px}
+.sensor-val{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--t1);line-height:1;transition:opacity .3s ease,transform .3s ease}
+.sensor-refresh{margin-left:auto;width:32px;height:32px;background:transparent;border:1px solid var(--c3);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .18s;color:var(--t3)}
+.sensor-refresh:hover{background:var(--c2)} .sensor-refresh svg{width:14px;height:14px}
+.sensor-refresh.spin svg{animation:spin .7s linear infinite}
+
+.manual-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:var(--c1);border:1px solid var(--c3);border-radius:var(--r2);margin-bottom:24px;font-size:13px;color:var(--t3)}
+.manual-row svg{width:15px;height:15px;flex-shrink:0;color:var(--g6)}
+.manual-inputs{display:flex;gap:8px;margin-left:auto;align-items:center}
+.manual-input{width:82px;padding:7px 10px;background:white;border:1.5px solid var(--c3);border-radius:8px;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--t1);outline:none;transition:border-color .18s;text-align:center}
+.manual-input:focus{border-color:var(--g5)} .manual-input::placeholder{color:var(--t4)}
+.btn-apply{padding:7px 14px;background:var(--g8);color:white;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .18s}
+.btn-apply:hover{background:var(--g9)}
+
+.input-card{background:white;border:1px solid var(--c4);border-radius:var(--r3);padding:26px;margin-bottom:16px;box-shadow:var(--sh-sm)}
+.input-card-header{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+.input-card-icon{width:38px;height:38px;background:var(--g1);border-radius:11px;display:flex;align-items:center;justify-content:center}
+.input-card-icon svg{width:19px;height:19px;color:var(--g8)}
+.input-card-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--t1)}
+.chip-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.chip{padding:8px 16px;background:var(--c1);border:1.5px solid var(--c3);border-radius:100px;font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .18s;user-select:none}
+.chip:hover{border-color:var(--g5);color:var(--g8)} .chip.active{background:var(--g8);border-color:var(--g8);color:white}
+.crop-input-row{display:flex;gap:10px}
+.crop-text{flex:1;padding:13px 16px;background:var(--c0);border:1.5px solid var(--c3);border-radius:var(--r1);font-family:'DM Sans',sans-serif;font-size:14.5px;color:var(--t1);outline:none;transition:border-color .2s,box-shadow .2s}
+.crop-text:focus{border-color:var(--g5);box-shadow:0 0 0 3px rgba(98,155,110,.12)} .crop-text::placeholder{color:var(--t4)}
+
+.days-card{background:white;border:1px solid var(--c4);border-radius:var(--r3);padding:24px 26px;margin-bottom:20px;box-shadow:var(--sh-sm)}
+.days-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.days-title{display:flex;align-items:center;gap:10px;font-family:'Playfair Display',serif;font-size:16px;font-weight:600;color:var(--t1)}
+.days-title svg{width:18px;height:18px;color:var(--g6)}
+.days-counter{background:var(--g8);color:white;font-size:14px;font-weight:700;padding:5px 15px;border-radius:100px;font-family:'DM Sans',sans-serif;min-width:64px;text-align:center}
+input[type=range]{width:100%;height:5px;-webkit-appearance:none;appearance:none;background:var(--c2);border-radius:10px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--g8);cursor:pointer;box-shadow:0 2px 8px rgba(43,80,56,.35);transition:transform .15s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.15)}
+.range-hints{display:flex;justify-content:space-between;margin-top:10px}
+.range-hint{font-size:11px;color:var(--t4)}
+
+.detect-wrap{margin-bottom:32px}
+.btn-detect{width:100%;padding:20px 28px;background:var(--g8);color:white;border:none;border-radius:var(--r3);font-family:'DM Sans',sans-serif;font-size:17px;font-weight:700;cursor:pointer;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;gap:11px;box-shadow:0 8px 28px rgba(43,80,56,.32);transition:background .2s,transform .15s,box-shadow .2s}
+.btn-detect:hover{background:var(--g9);transform:translateY(-2px);box-shadow:0 12px 36px rgba(43,80,56,.38)}
+.btn-detect:active{transform:translateY(0)}
+.btn-detect:disabled{background:var(--c2);color:var(--t4);box-shadow:none;cursor:not-allowed;transform:none}
+.btn-detect svg{width:20px;height:20px;flex-shrink:0}
+.btn-detect .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.25);transform:scale(0);animation:ripple .6s linear;pointer-events:none}
+.spinner{width:20px;height:20px;border-radius:50%;flex-shrink:0;border:2.5px solid rgba(255,255,255,.3);border-top-color:white;animation:spin .7s linear infinite}
+
+.empty-state{background:rgba(255,255,255,.45);border:1.5px dashed var(--c3);border-radius:var(--r3);padding:52px 24px;text-align:center;animation:fadeIn .4s ease both}
+.empty-icon{width:56px;height:56px;margin:0 auto 16px;opacity:.35}
+.empty-icon svg{width:56px;height:56px;color:var(--g6)}
+.empty-title{font-size:15px;font-weight:500;color:var(--t3);margin-bottom:5px}
+.empty-desc{font-size:13px;color:var(--t4)}
+
+.result-section{animation:slideUp .45s cubic-bezier(.22,1,.36,1) both}
+
+.risk-banner{border-radius:var(--r3);padding:26px 28px;margin-bottom:14px;border:2px solid;display:flex;align-items:flex-start;gap:20px;position:relative;overflow:hidden}
+.risk-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.28) 0%,transparent 55%);pointer-events:none}
+
+.risk-banner.Green {background:var(--rg-bg);border-color:var(--rg-bd)}
+.risk-banner.Yellow{background:var(--ry-bg);border-color:var(--ry-bd)}
+.risk-banner.Brown {background:var(--rb-bg);border-color:var(--rb-bd)}
+.risk-banner.Red   {background:var(--rr-bg);border-color:var(--rr-bd)}
+
+.risk-circle{width:62px;height:62px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:1;margin-top:2px}
+.risk-banner.Green  .risk-circle{background:#34A853;box-shadow:0 4px 16px rgba(52,168,83,.34)}
+.risk-banner.Yellow .risk-circle{background:#C49818;box-shadow:0 4px 16px rgba(196,152,24,.34)}
+.risk-banner.Brown  .risk-circle{background:#A84810;box-shadow:0 4px 16px rgba(168,72,16,.34)}
+.risk-banner.Red    .risk-circle{background:#C62828;box-shadow:0 4px 16px rgba(198,40,40,.34);animation:pulseRed 2s ease infinite}
+.risk-circle svg{width:28px;height:28px;color:white}
+
+.risk-circle::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid;opacity:.22;animation:ripple 2.8s ease-in-out infinite}
+.risk-banner.Green  .risk-circle::after{border-color:#34A853}
+.risk-banner.Yellow .risk-circle::after{border-color:#C49818}
+.risk-banner.Brown  .risk-circle::after{border-color:#A84810}
+.risk-banner.Red    .risk-circle::after{border-color:#C62828}
+
+.risk-body{flex:1;position:relative;z-index:1}
+.risk-kicker{font-size:10.5px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:5px}
+.risk-banner.Green  .risk-kicker{color:var(--rg-tx)}
+.risk-banner.Yellow .risk-kicker{color:var(--ry-tx)}
+.risk-banner.Brown  .risk-kicker{color:var(--rb-tx)}
+.risk-banner.Red    .risk-kicker{color:var(--rr-tx)}
+
+.risk-name{font-family:'Playfair Display',serif;font-size:27px;font-weight:800;line-height:1;margin-bottom:5px}
+.risk-banner.Green  .risk-name{color:var(--rg-tx)}
+.risk-banner.Yellow .risk-name{color:var(--ry-tx)}
+.risk-banner.Brown  .risk-name{color:var(--rb-tx)}
+.risk-banner.Red    .risk-name{color:var(--rr-tx)}
+
+.risk-sub{font-size:13.5px;color:var(--t2);font-weight:400;line-height:1.5;margin-bottom:14px}
+
+.risk-tag{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:100px;font-size:12.5px;font-weight:700}
+.risk-banner.Green  .risk-tag{background:rgba(52,168,83,.14);color:var(--rg-tx)}
+.risk-banner.Yellow .risk-tag{background:rgba(196,152,24,.14);color:var(--ry-tx)}
+.risk-banner.Brown  .risk-tag{background:rgba(168,72,16,.14);color:var(--rb-tx)}
+.risk-banner.Red    .risk-tag{background:rgba(198,40,40,.14);color:var(--rr-tx)}
+.risk-tag-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.risk-banner.Green  .risk-tag-dot{background:#34A853}
+.risk-banner.Yellow .risk-tag-dot{background:#C49818}
+.risk-banner.Brown  .risk-tag-dot{background:#A84810}
+.risk-banner.Red    .risk-tag-dot{background:#C62828;animation:pulse 1.4s ease infinite}
+
+.risk-days{flex-shrink:0;background:rgba(255,255,255,.58);border-radius:var(--r2);padding:12px 16px;text-align:right;position:relative;z-index:1;align-self:flex-start}
+.risk-days-lbl{font-size:10px;color:var(--t4);font-weight:600;letter-spacing:.9px;text-transform:uppercase;margin-bottom:4px}
+.risk-days-val{font-family:'Playfair Display',serif;font-size:22px;font-weight:800;color:var(--t1)}
+
+.meter-card{background:white;border:1px solid var(--c4);border-radius:var(--r3);padding:20px 24px;margin-bottom:14px;box-shadow:var(--sh-sm)}
+.meter-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.meter-title{font-size:13px;font-weight:600;color:var(--t2)}
+.meter-pct{font-size:13px;font-weight:700;color:var(--t1)}
+.meter-track{height:10px;background:var(--c2);border-radius:10px;overflow:hidden;margin-bottom:10px;position:relative}
+.meter-track::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(33.3% - 1px),rgba(255,255,255,.55) calc(33.3% - 1px),rgba(255,255,255,.55) calc(33.3% + 1px));z-index:1;pointer-events:none}
+.meter-fill{height:100%;border-radius:10px;animation:barGrow .9s cubic-bezier(.22,1,.36,1) .2s both}
+.meter-fill.Green {background:linear-gradient(90deg,#2E9E50,#4EC870)}
+.meter-fill.Yellow{background:linear-gradient(90deg,#A88010,#CCA030)}
+.meter-fill.Brown {background:linear-gradient(90deg,#944010,#B86830)}
+.meter-fill.Red   {background:linear-gradient(90deg,#9A1818,#C83232)}
+.meter-segs{display:flex;justify-content:space-between}
+.meter-seg{font-size:10.5px;color:var(--t4)}
+
+.summary-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.summary-cell{background:white;border:1px solid var(--c4);border-radius:var(--r2);padding:16px 18px;box-shadow:var(--sh-sm);text-align:center}
+.sc-lbl{font-size:11px;color:var(--t4);font-weight:600;letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px}
+.sc-val{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--t1)}
+
+.reco-card{background:white;border:1px solid var(--c4);border-radius:var(--r3);padding:26px;margin-bottom:14px;box-shadow:var(--sh-sm)}
+.reco-header{display:flex;align-items:center;gap:11px;margin-bottom:20px}
+.reco-iw{width:36px;height:36px;background:#F5F0E0;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.reco-iw svg{width:17px;height:17px;color:#907820}
+.reco-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--t1)}
+.reco-list{list-style:none}
+.reco-item{display:flex;align-items:flex-start;gap:13px;padding:13px 0;border-bottom:1px solid var(--c4);animation:fadeIn .4s ease both}
+.reco-item:last-child{border-bottom:none;padding-bottom:0}
+.reco-num{width:22px;height:22px;border-radius:50%;background:var(--g1);border:1.5px solid var(--g3);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--g7);flex-shrink:0;margin-top:1px}
+.reco-text{font-size:14px;color:var(--t2);line-height:1.6}
+
+.source-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--g1);border:1px solid var(--g3);border-radius:100px;font-size:11.5px;font-weight:600;color:var(--g7);margin-top:12px}
+.source-badge svg{width:12px;height:12px}
+
+.action-row{display:flex;gap:10px;margin-top:16px}
+.btn-action{flex:1;padding:14px;background:transparent;border:1.5px solid var(--c3);border-radius:var(--r2);font-family:'DM Sans',sans-serif;font-size:13.5px;font-weight:600;color:var(--t2);cursor:pointer;text-align:center;display:flex;align-items:center;justify-content:center;gap:8px;transition:all .18s}
+.btn-action svg{width:15px;height:15px}
+.btn-action:hover{border-color:var(--g5);color:var(--g8);background:var(--g1)}
+
+.footer{margin-top:48px;padding-top:20px;border-top:1px solid var(--c3);text-align:center;font-size:12px;color:var(--t4);line-height:1.7}
+
+@media(max-width:540px){.sensor-grid{grid-template-columns:1fr 1fr}.sensor-val{font-size:22px}.summary-row{grid-template-columns:1fr 1fr 1fr}.risk-days{display:none}.login-card{padding:26px 22px}}
+</style>
+</head>
+<body>
+<div id="page-login" class="page active">
+  <div class="login-brand">
+    <div class="login-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"/>
+        <path d="M12 2c2.5 4 4 7.5 4 10 0 2.2-1.8 4-4 4s-4-1.8-4-4c0-2.5 1.5-6 4-10z"/>
+        <path d="M12 12V22"/>
+      </svg>
+    </div>
+    <h1 class="login-app-name">Smart Crop Storage</h1>
+    <p class="login-tagline">Monitor your stored crops and prevent spoilage with real-time risk alerts</p>
+  </div>
+
+  <div class="login-card">
+    <div class="step active" id="step-phone">
+      <div class="card-title">Get Started</div>
+      <div class="card-desc">Enter your phone number to receive your personal dashboard link via SMS.</div>
+      <div class="input-wrap">
+        <div class="input-prefix">+92</div>
+        <input class="phone-field" id="phone-input" type="tel" placeholder="3001234567" maxlength="12" onkeydown="if(event.key==='Enter') submitPhone()"/>
+      </div>
+      <div class="input-hint">Pakistani number — country code auto-added</div>
+      <button class="btn-primary" id="btn-send-sms" onclick="submitPhone()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.45 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+        Send Dashboard Link via SMS
+      </button>
+    </div>
+
+    <div class="step" id="step-sent">
+      <div class="sms-sent-box">
+        <div class="sms-sent-top">
+          <div class="sms-check-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div class="sms-sent-title">SMS Sent Successfully</div>
+            <div class="sms-sent-desc">Your dashboard access link has been sent to the number below. Click below to access your crop monitor.</div>
+          </div>
+        </div>
+        <div class="sms-phone-display">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>
+          </svg>
+          <span id="phone-display-text">+92 300 0000000</span>
+        </div>
+      </div>
+
+      <button class="btn-open-dash" onclick="goToDashboard()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+          <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+        </svg>
+        Access Dashboard Now
+      </button>
+      <button class="btn-resend" onclick="resendSMS()">Resend SMS</button>
+    </div>
+  </div>
+
+  <div class="how-it-works">
+    <div class="hiw-title">How It Works</div>
+    <div class="hiw-steps">
+      <div class="hiw-step"><div class="hiw-num">1</div><div class="hiw-text">Register your phone number — receive a personal dashboard link via SMS</div></div>
+      <div class="hiw-step"><div class="hiw-num">2</div><div class="hiw-text">Open the link, select your crop type and days in storage</div></div>
+      <div class="hiw-step"><div class="hiw-num">3</div><div class="hiw-text">Get instant color-coded risk prediction and recommended actions</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-dashboard" class="page">
+<div class="dash-page">
+
+  <header class="header">
+    <div class="header-brand">
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10"/>
+          <path d="M12 2c2.5 4 4 7.5 4 10 0 2.2-1.8 4-4 4s-4-1.8-4-4c0-2.5 1.5-6 4-10z"/>
+          <path d="M12 12V22"/>
+        </svg>
+      </div>
+      <div>
+        <div class="header-name">EvaCRATE</div>
+        <div class="header-tagline">Smart Crop Storage Monitor</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="live-badge">Live</div>
+      <button class="btn-back" onclick="showPage('page-login')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        Back
+      </button>
+    </div>
+  </header>
+
+  <div class="model-banner loaded">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    Connected to EvaCRATE backend — ML predictions active
+  </div>
+
+  <div class="sec-label">Live Storage Conditions<span class="sec-label-r">Auto-refreshes every 90s</span></div>
+
+  <div class="sensor-grid">
+    <div class="sensor-card">
+      <div class="sensor-icon temp">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+      </div>
+      <div><div class="sensor-lbl">Temperature</div><div class="sensor-val" id="temp-val">28°C</div></div>
+      <button class="sensor-refresh" id="refresh-btn" onclick="refreshSensors()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+      </button>
+    </div>
+    <div class="sensor-card">
+      <div class="sensor-icon hum">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+      </div>
+      <div><div class="sensor-lbl">Humidity</div><div class="sensor-val" id="hum-val">65%</div></div>
+    </div>
+  </div>
+
+  <div class="manual-row">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M5.34 18.66l-1.41 1.41M12 2v2M12 20v2M4.93 4.93l1.41 1.41M18.66 18.66l1.41 1.41M2 12h2M20 12h2"/></svg>
+    <span>Override sensor values manually</span>
+    <div class="manual-inputs">
+      <input class="manual-input" id="manual-temp" type="number" placeholder="Temp °C" step="0.1" min="0" max="60"/>
+      <input class="manual-input" id="manual-hum"  type="number" placeholder="Hum %" step="0.1" min="0" max="100"/>
+      <button class="btn-apply" onclick="applyManual()">Apply</button>
+    </div>
+  </div>
+
+  <div class="input-card">
+    <div class="input-card-header">
+      <div class="input-card-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 16 8"/><path d="M17 2c0 4.4-3.6 8-8 8"/><path d="M17 2c0 4.4 3.6 8 8 8"/><path d="M9 10c0 4.4 3.6 8 8 8"/></svg>
+      </div>
+      <div class="input-card-title">Select Crop Type</div>
+    </div>
+    <div class="chip-grid">
+      <button class="chip active" data-crop="tomato" onclick="selectCrop(this)">Tomato</button>
+      <button class="chip" data-crop="rice"   onclick="selectCrop(this)">Rice</button>
+      <button class="chip" data-crop="wheat"  onclick="selectCrop(this)">Wheat</button>
+      <button class="chip" data-crop="potato" onclick="selectCrop(this)">Potato</button>
+      <button class="chip" data-crop="maize"  onclick="selectCrop(this)">Maize</button>
+      <button class="chip" data-crop="onion"  onclick="selectCrop(this)">Onion</button>
+      <button class="chip" data-crop="apple"  onclick="selectCrop(this)">Apple</button>
+      <button class="chip" data-crop="banana" onclick="selectCrop(this)">Banana</button>
+    </div>
+    <div class="crop-input-row">
+      <input class="crop-text" id="crop-input" type="text" placeholder="Or type crop name (e.g. Mango, Pepper...)" oninput="onCropType(this.value)"/>
+    </div>
+  </div>
+
+  <div class="days-card">
+    <div class="days-header">
+      <div class="days-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Days in Storage
+      </div>
+      <div class="days-counter" id="days-counter">5 days</div>
+    </div>
+    <input type="range" id="days-range" min="1" max="15" value="5" oninput="updateDays(this.value)"/>
+    <div class="range-hints"><span class="range-hint">1 day (fresh)</span><span class="range-hint">15 days (long storage)</span></div>
+  </div>
+
+  <div class="detect-wrap">
+    <button class="btn-detect" id="detect-btn" onclick="detectRisk(event)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      Detect Spoilage Risk
+    </button>
+  </div>
+
+  <div id="result-area">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 22 16 8"/><path d="M17 2c0 4.4-3.6 8-8 8"/><path d="M17 2c0 4.4 3.6 8 8 8"/><path d="M9 10c0 4.4 3.6 8 8 8"/></svg>
+      </div>
+      <div class="empty-title">No analysis yet</div>
+      <div class="empty-desc">Select a crop and press Detect Spoilage Risk to begin</div>
+    </div>
+  </div>
+
+  <div class="footer">EvaCRATE — Smart Crop Storage Monitor</div>
+
+</div>
+</div>
+
+<script>
+// API URL Configuration
+const API_BASE = getAPIUrl();
+
+function getAPIUrl() {
+  // Check if running locally or on GitHub Pages
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:5000';
+  }
+  // For GitHub Pages + Render backend
+  return 'https://evacrate-backend.onrender.com'; // Replace with your Render URL
+}
+
+const RISK_CFG = {
+  Green: {
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`,
+    name:'Safe', sub:'Crop is in good condition — no immediate action required',
+    tag:'All conditions normal — continue regular monitoring', meter:15,
+    recos:['Continue monitoring temperature and humidity readings daily.','Ensure good ventilation and steady airflow throughout the storage area.','Keep temperature below 30°C where possible to extend shelf life.','Record daily readings to identify trends over time.','Physically inspect a sample of the crop every few days.']
+  },
+  Yellow: {
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+    name:'Moderate Risk', sub:'Action needed within 3 to 5 days — crop may spoil',
+    tag:'Take preventive action within 3 to 4 days', meter:42,
+    recos:['Reduce humidity in the storage area as soon as possible.','Open vents and increase airflow — use fans if available.','Begin preparing crop for sale within the next 3 to 4 days.','Physically inspect the crop for early signs of rot or mold.','Move to a cooler, drier storage location if one is available.']
+  },
+  Brown: {
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
+    name:'High Risk', sub:'Urgent action today — crop will spoil within 2 days',
+    tag:'Sell or move crop immediately without delay', meter:72,
+    recos:['Sell the crop immediately — contact buyers or local market today.','Remove any portions already showing signs of rot to slow the spread.','Maximize ventilation — open all vents and use fans continuously.','Do not add any new stock to this storage area right now.','Consider emergency cold storage if any local facility is available.']
+  },
+  Red: {
+    icon:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`,
+    name:'Already Rotten', sub:'Crop is spoiled and unsafe to sell or consume',
+    tag:'Discard immediately and sanitize storage area', meter:100,
+    recos:['Discard the spoiled crop completely and safely — do not sell or consume.','Keep spoiled crop physically separated from all other healthy produce.','Clean and disinfect the entire storage area before reusing it.','Identify what caused the spoilage: temperature, humidity, or storage duration.','Contact your agricultural extension officer if crop losses are significant.']
+  }
+};
+
+const ST = { temp:28, hum:65, crop:'tomato', days:5, lastResult:null, phone:'' };
+
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function submitPhone(){
+  const raw = document.getElementById('phone-input').value.trim();
+  if(!raw || raw.replace(/\D/g,'').length < 7){
+    const f=document.getElementById('phone-input');
+    f.style.animation='none'; void f.offsetHeight; f.style.animation='shake .4s ease';
+    setTimeout(()=>f.style.animation='',450); return;
+  }
+  ST.phone = '+92' + raw.replace(/^0+/,'').replace(/\D/g,'');
+  const btn=document.getElementById('btn-send-sms');
+  btn.disabled=true;
+  btn.innerHTML='<div class="spinner"></div> Sending SMS...';
+  setTimeout(()=>{
+    btn.disabled=false;
+    btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.45 2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Send Dashboard Link via SMS`;
+    showStep('step-sent');
+    const fmt = ST.phone.replace(/(\+92)(\d{3})(\d{4})(\d+)/,'$1 $2 $3 $4');
+    document.getElementById('phone-display-text').textContent = fmt;
+  },1600);
+}
+function showStep(id){document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active')}
+function resendSMS(){showStep('step-phone')}
+function goToDashboard(){showPage('page-dashboard');loadSensors()}
+
+async function refreshSensors(){
+  const btn=document.getElementById('refresh-btn'); btn.classList.add('spin');
+  try{
+    const r=await fetch(API_BASE + '/api/sensor'); const d=await r.json();
+    ST.temp=d.temperature; ST.hum=d.humidity;
+  }catch{
+    const h=new Date().getHours()+new Date().getMinutes()/60;
+    const dc=Math.sin((2*Math.PI/24)*h-Math.PI/2);
+    ST.temp=parseFloat((29+6*dc+(Math.random()*1.2-.6)).toFixed(1));
+    ST.hum=parseFloat(Math.max(35,Math.min(90,64+8*(-dc)+(Math.random()*3-1.5))).toFixed(1));
+  }
+  animVal('temp-val',ST.temp+'°C'); animVal('hum-val',ST.hum+'%');
+  setTimeout(()=>btn.classList.remove('spin'),700);
+}
+function loadSensors(){refreshSensors()}
+function animVal(id,v){const el=document.getElementById(id);el.style.opacity='0';el.style.transform='translateY(6px)';el.style.transition='opacity .3s ease,transform .3s ease';setTimeout(()=>{el.textContent=v;el.style.opacity='1';el.style.transform='translateY(0)'},80)}
+setInterval(()=>{if(document.getElementById('page-dashboard').classList.contains('active'))refreshSensors()},90000);
+
+function selectCrop(btn){document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));btn.classList.add('active');ST.crop=btn.dataset.crop;document.getElementById('crop-input').value=''}
+function onCropType(v){ST.crop=v.toLowerCase().trim();document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('active',c.dataset.crop===ST.crop))}
+function updateDays(v){ST.days=parseInt(v);document.getElementById('days-counter').textContent=v+(v==1?' day':' days')}
+function applyManual(){const t=parseFloat(document.getElementById('manual-temp').value);const h=parseFloat(document.getElementById('manual-hum').value);if(!isNaN(t)&&t>=0&&t<=60){ST.temp=t;animVal('temp-val',t+'°C')}if(!isNaN(h)&&h>=0&&h<=100){ST.hum=h;animVal('hum-val',h+'%')}}
+
+async function detectRisk(e){
+  if(!ST.crop){const inp=document.getElementById('crop-input');inp.style.animation='none';void inp.offsetHeight;inp.style.animation='shake .4s ease';setTimeout(()=>inp.style.animation='',450);return}
+  const btn=document.getElementById('detect-btn');
+  const rip=document.createElement('span');rip.className='ripple';
+  const rect=btn.getBoundingClientRect();const sz=Math.max(rect.width,rect.height);
+  rip.style.cssText=`width:${sz}px;height:${sz}px;left:${(e.clientX||rect.left+rect.width/2)-rect.left-sz/2}px;top:${(e.clientY||rect.top+rect.height/2)-rect.top-sz/2}px`;
+  btn.appendChild(rip);setTimeout(()=>rip.remove(),700);
+  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Analyzing...';
+  document.getElementById('empty-state').style.display='none';
+  const old=document.getElementById('result-cards');if(old)old.remove();
+  await new Promise(r=>setTimeout(r,850));
+  let result;
+  try{
+    const res=await fetch(API_BASE + '/api/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({temperature:ST.temp,humidity:ST.hum,crop:ST.crop,days_stored:ST.days})});
+    result=await res.json();
+  }catch(err){
+    btn.disabled=false;btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> Detect Spoilage Risk`;
+    alert('Cannot connect to backend. Check API_BASE URL.');return;
+  }
+  ST.lastResult=result;
+  btn.disabled=false;btn.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg> Re-analyze`;
+  renderResult(result);
+}
+
+function renderResult(d){
+  const cfg=RISK_CFG[d.risk_level]||RISK_CFG.Green;
+  const cropCap=d.crop.charAt(0).toUpperCase()+d.crop.slice(1);
+  const daysVal=d.days_to_rot<=0.5?'0.0d':d.days_to_rot.toFixed(1)+'d';
+  const recos=cfg.recos.map((r,i)=>`<li class="reco-item" style="animation-delay:${.08+i*.07}s"><div class="reco-num">${i+1}</div><div class="reco-text">${r}</div></li>`).join('');
+
+  const html=`
+  <div class="result-section" id="result-cards">
+    <div class="risk-banner ${d.risk_level}">
+      <div class="risk-circle">${cfg.icon}</div>
+      <div class="risk-body">
+        <div class="risk-kicker">Spoilage Risk Assessment</div>
+        <div class="risk-name">${cfg.name}</div>
+        <div class="risk-sub">${cfg.sub}</div>
+        <div class="risk-tag"><div class="risk-tag-dot"></div>${cfg.tag}</div>
+      </div>
+      <div class="risk-days"><div class="risk-days-lbl">Time Left</div><div class="risk-days-val">${daysVal}</div></div>
+    </div>
+    <div class="meter-card">
+      <div class="meter-header"><div class="meter-title">Risk Severity Scale</div><div class="meter-pct">${cfg.meter}%</div></div>
+      <div class="meter-track"><div class="meter-fill ${d.risk_level}" style="width:${cfg.meter}%"></div></div>
+      <div class="meter-segs"><span class="meter-seg">Safe</span><span class="meter-seg">Moderate</span><span class="meter-seg">High</span><span class="meter-seg">Rotten</span></div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-cell"><div class="sc-lbl">Crop</div><div class="sc-val">${cropCap}</div></div>
+      <div class="summary-cell"><div class="sc-lbl">Temperature</div><div class="sc-val">${d.temperature}°C</div></div>
+      <div class="summary-cell"><div class="sc-lbl">Humidity</div><div class="sc-val">${d.humidity}%</div></div>
+    </div>
+    <div class="reco-card">
+      <div class="reco-header">
+        <div class="reco-iw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg></div>
+        <div class="reco-title">Recommended Actions</div>
+      </div>
+      <ul class="reco-list">${recos}</ul>
+    </div>
+    <div><span class="source-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ${d.source} &nbsp;|&nbsp; ${d.timestamp}</span></div>
+    <div class="action-row">
+      <button class="btn-action" onclick="downloadReport()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</button>
+      <button class="btn-action" onclick="shareResult()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
+    </div>
+  </div>`;
+
+  const area=document.getElementById('result-area');
+  area.insertAdjacentHTML('beforeend',html);
+  document.getElementById('result-cards').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function downloadReport(){
+  const d=ST.lastResult; if(!d)return;
+  const cfg=RISK_CFG[d.risk_level]||RISK_CFG.Green;
+  const crop=d.crop.charAt(0).toUpperCase()+d.crop.slice(1);
+  const txt=`EvaCRATE Risk Report\n========================\nDate: ${d.timestamp}\nCrop: ${crop}\nTemp: ${d.temperature}°C | Humidity: ${d.humidity}%\nDays Stored: ${d.days_stored}\n------------------------\nRisk Level: ${d.risk_level} (${cfg.name})\nDays to Rot: ${d.days_to_rot.toFixed(2)}\nSource: ${d.source}\n\nRecommended Actions:\n${cfg.recos.map((r,i)=>`${i+1}. ${r}`).join('\n')}\n\nGenerated by EvaCRATE`;
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain'}));
+  a.download=`evacrate-${d.crop}.txt`; a.click();
+}
+function shareResult(){
+  const d=ST.lastResult; if(!d)return;
+  const cfg=RISK_CFG[d.risk_level]||RISK_CFG.Green;
+  const crop=d.crop.charAt(0).toUpperCase()+d.crop.slice(1);
+  const text=`EvaCRATE Report - ${crop}\nRisk: ${d.risk_level} (${cfg.name})\nDays to Rot: ${d.days_to_rot.toFixed(1)}\nTemperature: ${d.temperature}°C | Humidity: ${d.humidity}%`;
+  if(navigator.share)navigator.share({title:'Crop Risk Report',text});
+  else navigator.clipboard.writeText(text).then(()=>alert('Copied to clipboard'));
+}
+</script>
+</body>
+</html>
